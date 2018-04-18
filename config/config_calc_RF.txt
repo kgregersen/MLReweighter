@@ -1,0 +1,23 @@
+
+# I/O settings
+string OutputFileName          = ./weights/RFWeights.txt
+string InputFileName           = ./files/data_orig.root
+string InputTreeNameSource     = source
+string InputTreeNameTarget     = target
+
+# additional variables
+string EventWeightVariableName = weight
+
+# hyperparameters
+string Method                  = RF
+bool   Bagging                 = true
+int    NumberOfTrees           = 500
+int    MaxTreeLayers           = 1000
+int    MinEventsNode           = 50
+float  LearningRate            = 1
+float  SamplingFraction        = 0.1
+float  SamplingFractionSeed    = 314
+float  FeatureSamplingFraction = 1
+
+# misc. settings
+string PrintLevel              = INFO

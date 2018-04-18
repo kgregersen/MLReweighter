@@ -1,0 +1,12 @@
+// Add reweighting variables here using the preprocesser macro VARIABLE(name, type) which is defined in 'src/Variables.cxx'
+//	 
+// The variables in this file are automatically added to an std::vector via
+//
+// Variables::Initialize();
+//
+// which can be accessed later via:
+//
+// std::vector<Variable *> vars = Variables::Get();
+
+VARIABLE( X1 , double )
+VARIABLE( X2 , double )

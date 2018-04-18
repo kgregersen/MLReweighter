@@ -1,0 +1,27 @@
+// local includes
+#include "Store.h"
+
+
+template <class T> 
+const T & Config::get(const std::string & key) const
+{
+
+  bool exists = m_store->exists(key);
+
+  if ( ! exists ) {
+    m_log << Log::ERROR << "get() : Couldn't retrieve key = " << key << Log::endl();
+    throw(0);
+  }
+
+  return m_store->get<T>(key);
+  
+}
+
+
+template <class T> 
+bool Config::getif(const std::string & key, T & value) const
+{
+  
+  return m_store->getif<T>(key, value);
+
+}

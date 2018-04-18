@@ -1,0 +1,13 @@
+
+# I/O settings
+string WeightsFileName         = ./weights/RFWeights.txt
+string InputFileName           = ./files/data.root
+string InputTreeNameSource     = source
+
+# additional variables
+string Method                  = RF
+string WeightName              = RFWeight
+string EventWeightVariableName = weight
+
+# misc. settings
+string PrintLevel              = INFO

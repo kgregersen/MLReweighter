@@ -1,0 +1,51 @@
+// ROOT includes
+#include "TTree.h"
+
+// local includes
+#include "Store.h"
+
+
+template <typename T>
+T & Event::get(const std::string & key)
+{
+
+  bool exists = m_store->exists(key);
+
+  if ( ! exists ) {
+    m_log << Log::ERROR << "get() : Couldn't retrieve key = " << key << Log::endl();
+    throw(0);
+  }
+
+  return m_store->get<T>(key);
+  
+}
+
+
+template <typename T>
+const T & Event::get(const std::string & key) const
+{
+
+  return get<T>(key);
+  
+}
+
+
+template<typename T>
+void Event::ConnectVariable(const std::string & key, TTree * tree)
+{
+
+  bool exists = m_store->exists(key);
+  
+  if ( exists ) {
+    m_log << Log::DEBUG << "ConnectVariable() : " << key << " is already in map - retrieving variable and connecting to tree" << Log::endl();
+  }
+  else {
+    m_log << Log::DEBUG << "ConnectVariable() : Connecting " << key << Log::endl();
+    m_store->put<T>(key, T());
+  }
+  
+  T & value = m_store->get<T>(key);
+  tree->SetBranchStatus(key.c_str(), 1);
+  tree->SetBranchAddress(key.c_str(), &value); 
+  
+}
