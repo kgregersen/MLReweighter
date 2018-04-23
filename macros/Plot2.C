@@ -1,0 +1,215 @@
+// Macro for plotting distributions of weights
+// Usage:
+//
+// root -l -b -q 'Plot2.C+("../files/data_1.root", "source", 25, 2.5)'
+//
+
+// ROOT includes
+#include "TFile.h"
+#include "TTree.h"
+#include "TH1F.h"
+#include "TCanvas.h"
+#include "TLegend.h"
+#include "TString.h"
+#include "TPad.h"
+#include "TLine.h"
+
+// STL includes
+#include <iostream>
+#include <sys/stat.h>
+
+
+
+void PrepareTH1F(TH1F * h,  int color, int linestyle, int markerstyle, int fill, TString xaxisTitle)
+{
+
+  if ( ! h ) return;
+
+  h->Sumw2();
+  
+  h->SetStats(0);
+  h->GetYaxis()->SetTitleOffset(1.15);
+  h->GetYaxis()->CenterTitle();
+  h->GetXaxis()->SetTitle(xaxisTitle);
+  h->GetXaxis()->CenterTitle();
+  h->SetLineColor(color);
+  h->SetLineStyle(linestyle);
+  h->SetLineWidth(1);
+  h->SetMarkerStyle(markerstyle);
+  h->SetMarkerColor(color);
+  if ( fill ) {
+    h->SetLineColor(kBlack);
+    h->SetFillColor(color);
+  }
+
+}
+
+
+
+void Plot2(TString inFile, TString sourceName, int nBins = 100, float xmax = 3)
+{
+
+  TString BDTw = "BDTWeight";
+  TString RFw  = "RFWeight";
+  TString ETw  = "ETWeight";
+  TString Effw = "EffWeight";
+  
+  float ymin = 5.e-4;
+  
+  TFile * f = new TFile(inFile.Data(), "read");
+  TTree * t = (TTree*)f->Get( sourceName );
+
+  TH1F * hBDT = new TH1F("hBDT", "", nBins, 0.00001, xmax);
+  TH1F * hRF  = new TH1F("hRF" , "", nBins, 0.00001, xmax);
+  TH1F * hET  = new TH1F("hET" , "", nBins, 0.00001, xmax);
+  TH1F * hEff       = new TH1F("hEff"      , "", nBins, 0.00001, xmax);
+  PrepareTH1F(hBDT, kRed      , kSolid , 20, 0, "Weight");
+  PrepareTH1F(hRF , kAzure + 1, kSolid , 22, 0, "Weight");
+  PrepareTH1F(hET , kGreen + 1, kSolid , 21, 0, "Weight");
+  PrepareTH1F(hEff, kBlack    , kSolid ,  0, 0, "Weight");
+  
+  TCanvas * c = new TCanvas("c","", 1200, 800);
+  c->cd();
+  c->SetLogy();
+
+  t->Draw(BDTw + ">>hBDT");
+  t->Draw(RFw  + ">>hRF" );
+  t->Draw(ETw  + ">>hET" );
+
+  t->Draw(Effw + ">>hEff");
+
+  TH1F * ratio_BDT = static_cast<TH1F *>(hBDT->Clone());
+  ratio_BDT->Add(hEff, -1);
+  ratio_BDT->Divide(hEff);   
+
+  TH1F * ratio_RF = static_cast<TH1F *>(hRF->Clone());
+  ratio_RF->Add(hEff, -1);
+  ratio_RF->Divide(hEff);   
+
+  TH1F * ratio_ET = static_cast<TH1F *>(hET->Clone());
+  ratio_ET->Add(hEff, -1);
+  ratio_ET->Divide(hEff);   
+
+  hBDT->Scale( 1./hBDT->Integral() );
+  hRF ->Scale( 1./hRF ->Integral() );
+  hET ->Scale( 1./hET ->Integral() );
+  hEff->Scale( 1./hEff->Integral() );
+
+  TPad * p1 = new TPad("p1", "p1", 0.0, 0.3, 1.0, 1.0);
+  TPad * p2 = new TPad("p2", "p2", 0.0, 0.0, 1.0, 0.3);
+  p1->Draw();
+  p2->Draw();
+  
+  p1->SetTicks(1,1);
+  p1->SetTopMargin(0.05);
+  p1->SetBottomMargin(0.02);
+  p1->SetRightMargin(0.08);
+  
+  p2->SetTicks(1,1);
+  p2->SetBottomMargin(0.3);
+  p2->SetTopMargin(0.05);
+  p2->SetRightMargin(0.08);
+  
+  p1->cd();
+  
+  TH1 * frame1 = p1->DrawFrame(hBDT->GetXaxis()->GetXmin(), ymin, hBDT->GetXaxis()->GetXmax(), hBDT->GetMaximum()*1.5);
+  frame1->GetYaxis()->SetTitle("Probaility Density Function");
+  frame1->GetYaxis()->CenterTitle();
+  frame1->GetYaxis()->SetTitleSize(0.05);
+  frame1->GetYaxis()->SetTitleOffset(0.975);
+  frame1->GetXaxis()->SetLabelSize(0.);
+  frame1->GetYaxis()->SetLabelSize(0.05);
+  
+  hBDT->DrawCopy("histsame");
+  hBDT->Draw("psame");
+  hRF->DrawCopy("histsame");
+  hRF->Draw("psame");
+  hET->DrawCopy("histsame");
+  hET->Draw("psame");
+  hEff->Draw("histsame");
+  
+  TLegend l(0.6,0.65,0.85,0.85);
+  l.SetLineColor(0);
+  l.SetTextSize(0.04);
+  l.AddEntry(hBDT, "Boosted Decision Trees "    , "lp");
+  l.AddEntry(hRF , "Random Forest"              , "lp");
+  l.AddEntry(hET , "Extremely Randomised Trees" , "lp");
+  l.AddEntry(hEff, "Efficiency Function"        , "l");
+  l.Draw();
+
+  gPad->RedrawAxis();
+  
+  p2->cd();
+  
+  //TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -1.49, hBDT->GetXaxis()->GetXmax(), 01.49);
+  //TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -0.99, hBDT->GetXaxis()->GetXmax(), 0.99);
+  //TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -0.79, hBDT->GetXaxis()->GetXmax(), 0.79);
+  //TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -0.69, hBDT->GetXaxis()->GetXmax(), 0.69);
+  //TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -0.49, hBDT->GetXaxis()->GetXmax(), 0.49);
+  TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -0.39, hBDT->GetXaxis()->GetXmax(), 0.39);
+  //TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -0.049, hBDT->GetXaxis()->GetXmax(), 0.049);
+  frame2->GetXaxis()->SetTitle( hBDT->GetXaxis()->GetTitle() );
+  frame2->GetXaxis()->CenterTitle();
+  frame2->GetYaxis()->SetTitle("(pred - eff) / eff");
+  frame2->GetYaxis()->CenterTitle();
+  frame2->GetXaxis()->SetTitleSize(0.11);
+  frame2->GetXaxis()->SetTitleOffset(1.15);
+  frame2->GetXaxis()->SetLabelSize(0.12);
+  frame2->GetXaxis()->SetTickLength(0.08);
+  frame2->GetYaxis()->SetTitleSize(0.09);
+  frame2->GetYaxis()->SetTitleOffset(0.5);
+  frame2->GetYaxis()->SetLabelSize(0.11);
+  frame2->GetYaxis()->SetTickLength(0.02);
+  frame2->GetYaxis()->SetNdivisions(505);
+  
+  ratio_BDT->DrawCopy("histsame");
+  ratio_BDT->Draw("psame");
+  ratio_RF->DrawCopy("histsame");
+  ratio_RF->Draw("psame");
+  ratio_ET->DrawCopy("histsame");
+  ratio_ET->Draw("psame");
+
+  TLine line(hBDT->GetXaxis()->GetXmin(), 0.0, hBDT->GetXaxis()->GetXmax(), 0.0);
+  line.SetLineColor(kBlack);
+  line.SetLineStyle(kDashed);
+  line.Draw("same");
+
+  // float chi2_train = 0;
+  // float chi2_test  = 0;
+  // int ndf_train    = 0;
+  // int ndf_test     = 0;
+  // for (int i = 1; i <= ratio_train->GetNbinsX(); ++i) {
+  //   float r_train   = ratio_train->GetBinContent(i);
+  //   float r_train_e = ratio_train->GetBinError(i);
+  //   if ( r_train > 0. && r_train_e > 0.) {
+  //     chi2_train += std::pow((r_train-0.)/r_train_e, 2.);
+  //     ndf_train += 1;
+  //   }
+  //   float r_test   = ratio_test->GetBinContent(i);
+  //   float r_test_e = ratio_test->GetBinError(i);
+  //   if ( r_test > 0. && r_test_e > 0.) {
+  //     chi2_test += std::pow((r_test-0.)/r_test_e, 2.);
+  //     ndf_test += 1;
+  //   }
+  // }
+  // tex.SetTextSize(0.1);
+  // tex.DrawLatex(0.30,0.77, TString::Format("#chi^{2}/ndf_{train} = %0.1f/%d = %0.1f", chi2_train, ndf_train, chi2_train/ndf_train));
+  // tex.DrawLatex(0.53,0.77, TString::Format("#chi^{2}/ndf_{test} = %0.1f/%d = %0.1f", chi2_test, ndf_test, chi2_test/ndf_test));
+  
+  gPad->RedrawAxis();
+  
+  TString directory = "plot2";
+  const char * dirname = directory.Data();
+  struct stat dir;
+  char command[500];
+  if (stat(dirname,&dir) != 0) {
+    std::cout << "Creating directories ./" << dirname << std::endl;
+    sprintf(command,"mkdir -p %s",dirname);
+    int result = system(command);
+  }
+  
+  c->SaveAs( TString::Format("%s/weights.pdf", directory.Data()) );
+  c->SaveAs( TString::Format("%s/weights.eps", directory.Data()) );
+
+}
+  

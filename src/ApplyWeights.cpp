@@ -22,7 +22,6 @@
 // ROOT includes
 #include "TFile.h"
 #include "TTree.h"
-#include "TObjArray.h"
 
 
 
@@ -30,7 +29,7 @@ int main(int argc, char * argv[]) {
 
   // check number of arguments
   if ( argc != 2 ) {
-    std::cout << "Provide 1 argument: ./bin/CalculateWeights <config-path>" << std::endl;
+    std::cout << "Provide 1 argument: ./bin/ApplyWeights <config-path>" << std::endl;
     return 0;
   }
 

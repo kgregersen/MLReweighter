@@ -1,7 +1,7 @@
 
 # I/O settings
 string WeightsFileName         = ./weights/ETWeights.txt
-string InputFileName           = ./files/data.root
+string InputFileName           = ./files/data_2.root
 string InputTreeNameSource     = source
 
 # additional variables

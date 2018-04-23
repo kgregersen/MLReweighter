@@ -1,7 +1,7 @@
 
 # I/O settings
 string OutputFileName          = ./weights/BDTWeights.txt
-string InputFileName           = ./files/data_orig.root
+string InputFileName           = ./files/data_orig_1.root
 string InputTreeNameSource     = source
 string InputTreeNameTarget     = target
 
@@ -13,7 +13,7 @@ string Method                  = BDT
 bool   Bagging                 = false
 int    NumberOfTrees           = 100
 int    MaxTreeLayers           = 4
-int    MinEventsNode           = 200
+int    MinEventsNode           = 100
 float  LearningRate            = 0.5
 float  SamplingFraction        = 1
 float  SamplingFractionSeed    = 314
