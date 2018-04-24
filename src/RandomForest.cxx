@@ -95,8 +95,6 @@ void RandomForest::Process()
   m_forests.clear();
   m_forests.push_back( forest );
 
-
-
 }
 
 

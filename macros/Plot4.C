@@ -99,7 +99,7 @@ void Plot4(TString inFile, TString sourceName, int nBins = 100, float xMin = -1,
   
   TH1 * frame1 = p0->DrawFrame(hBDT->GetXaxis()->GetXmin(), yMin, hBDT->GetXaxis()->GetXmax(), hBDT->GetMaximum()*500);
 
-  frame1->GetYaxis()->SetTitle("Probaility Density Function");
+  frame1->GetYaxis()->SetTitle("Probability Density Function");
   frame1->GetYaxis()->CenterTitle();
   frame1->GetYaxis()->SetTitleSize(0.05);
   frame1->GetYaxis()->SetTitleOffset(1.05);
@@ -136,6 +136,11 @@ void Plot4(TString inFile, TString sourceName, int nBins = 100, float xMin = -1,
   tex.DrawLatex(0.71, 0.780, TString::Format("#sigma = %0.3f", hRF->GetStdDev()));
   tex.DrawLatex(0.59, 0.717, TString::Format("#mu = %0.3f", hET->GetMean()));
   tex.DrawLatex(0.71, 0.717, TString::Format("#sigma = %0.3f", hET->GetStdDev()));
+
+  TLine line(hT->GetXaxis()->GetXmin(), 0.0, hT->GetXaxis()->GetXmax(), 0.0);
+  line.SetLineColor(kBlack);
+  line.SetLineStyle(kDashed);
+  line.Draw("same");
   
   gPad->RedrawAxis();
   
