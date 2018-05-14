@@ -58,7 +58,9 @@ void BDT::Initialize()
 {
 
   // prepare event indices
-  Algorithm::PrepareIndices();
+  static bool bagging = false;
+  Config::Instance().getif<bool>("Bagging", bagging); 
+  if ( ! bagging ) Algorithm::PrepareIndices();
   
   // get histogram definitions
   m_histDefs = new HistDefs;
@@ -87,6 +89,11 @@ void BDT::Process()
   // grow decision trees
   int ntree = Config::Instance().get<int>("NumberOfTrees");
   for (int itree = 0; itree < ntree; ++itree) {
+
+    // bagging
+    static bool bagging = false;
+    Config::Instance().getif<bool>("Bagging", bagging); 
+    if ( bagging ) Algorithm::PrepareIndices();
 
     // create tree
     DecisionTree * dtree = new DecisionTree(m_source, m_target, m_indicesSource, m_indicesTarget, m_histDefs);

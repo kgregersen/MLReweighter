@@ -1,12 +1,9 @@
 //local includes
-#include "Forest.h"
-#include "DecisionTree.h"
 #include "Variable.h"
 #include "Variables.h"
 #include "Event.h"
 #include "Config.h"
 #include "Log.h"
-#include "Method.h"
 
 // stl includes
 #include <vector>
@@ -19,7 +16,8 @@
 // ROOT includes
 #include "TFile.h"
 #include "TTree.h"
-#include "TH2F.h"
+#include "TBranch.h"
+#include "TFormula.h"
 
 
 
@@ -27,7 +25,7 @@ int main(int argc, char * argv[]) {
 
   // check number of arguments
   if ( argc != 2 ) {
-    std::cout << "Provide 1 argument: ./bin/WeightDiagnostics <config-path>" << std::endl;
+    std::cout << "Provide 1 argument: ./bin/CreateTrueTarget <config-path>" << std::endl;
     return 0;
   }
 
@@ -36,7 +34,7 @@ int main(int argc, char * argv[]) {
   Config::Instance(configpath.c_str());
 
   // initialize log
-  Log log("WeightDiagnostics");
+  Log log("CreateTrueTarget");
   std::string str_level;
   Config::Instance().getif<std::string>("PrintLevel", str_level);
   if (str_level.length() > 0) {
@@ -44,22 +42,9 @@ int main(int argc, char * argv[]) {
     log.SetLevel(level);
   }
 
-  // initialize variables (needs to be done before declaring the algorithm)
-  Variables::Initialize();
-
-  // open weights file
-  std::string weightsfilename = Config::Instance().get<std::string>("WeightsFileName");
-  std::ifstream weightsfile;
-  log << Log::INFO << "Opening file " << weightsfilename << Log::endl();
-  weightsfile.open(weightsfilename.c_str());
- 
-  // declare/run algorithm
-  std::string weightsFileName = Config::Instance().get<std::string>("WeightsFileName");
-  const std::vector<const Forest *> forests = Forest::ReadForests(weightsFileName);
-  
   // open input file in 'update' mode
   const std::string & inputfilename = Config::Instance().get<std::string>("InputFileName");
-  TFile * f = new TFile(inputfilename.c_str(), "update");
+  TFile * f = new TFile(inputfilename.c_str(), "read");
   if ( ! f->IsOpen() ) {
     log << Log::ERROR << "Couldn't open file : " << inputfilename << Log::endl();
     return 0;
@@ -73,29 +58,51 @@ int main(int argc, char * argv[]) {
     return 0;
   }
 
+  // save new file with source and true target
+  //  - make full clone of source into new file
+  //  - disable weight variable in clone of source into target_true (we'll add this branch later where it will also contain the efficiency weight)
+  log << Log::INFO << "Cloning source tree and writing to new file" << Log::endl();
+  const std::string & outputfilename = Config::Instance().get<std::string>("OutputFileName");
+  TFile * f_out = new TFile(outputfilename.c_str(), "recreate");
+  TTree * source_copy = source->CloneTree();
+  const std::string & eventWeightName = Config::Instance().get<std::string>("EventWeightVariableName");
+  source->SetBranchStatus(eventWeightName.c_str(), 0);
+  TTree * target_true = source->CloneTree();
+  target_true->SetName("target_true");
+  f_out->Write();
+
+  // close everything
+  log << Log::INFO << "Cleaning up" << Log::endl();
+  delete source_copy;
+  delete target_true;
+  delete f_out;
+  delete source;
+  delete f;
+
+  // Now open the file which contains both the source and target_true TTrees, and add new branch to target_true containing the eff. weight
+  log << Log::INFO << "Opening new file with cloned source and adding branch with efficiency weight" << Log::endl();
+  f = new TFile(outputfilename.c_str(), "update");
+  source = static_cast<TTree *>(f->Get(treenamesource.c_str()));
+  target_true = static_cast<TTree *>(f->Get("target_true"));
+  float weight;
+  TBranch * b_weight = target_true->Branch(eventWeightName.c_str(), &weight);
+
+  // initialize variables (needs to be done before declaring the algorithm)
+  Variables::Initialize();
+
+  // read efficiency function from config and set variables
+  const std::string & formula = Config::Instance().get<std::string>("EfficiencyFunction");  
+  TFormula effFunc;
+  effFunc.SetName("effFunc"); 
+  for (const Variable * var : Variables::Get()) {
+    effFunc.AddVariable( (var->Name()).c_str() );
+  }
+  effFunc.Compile( formula.c_str() );
+  
   // create event object and connect TTrees
   Event & event = Event::Instance();
   event.ConnectAllVariables(source, false);
-
-  // histograms for weight diagnostics
-  int nMaxTrees = 0;
-  for (unsigned int i = 0; i < forests.size(); ++i) {
-    int nTrees = (forests.at(i)->GetTrees()).size();
-    if (nTrees > nMaxTrees) {
-      nMaxTrees = nTrees;
-    }
-  }
-
-  // prepare output
-  std::string str_method;
-  Config::Instance().getif<std::string>("Method", str_method);
-  if (str_level.length() == 0) {
-    log << Log::ERROR << "Method not specified! Syntax : 'string Method = <method-name>'. Available methods: BDT, RF, ET (see ./inc/Methods.h)." << Log::endl();
-    return 0;    
-  }
-  TFile * outFile = new TFile(TString::Format("files/WeightDiagnostics_%s.root", str_method.c_str()), "recreate");
-  outFile->cd();
-  TH2F * WeightDiagnostics = new TH2F(TString::Format("WeightDiagnostics_%s", str_method.c_str()), "", nMaxTrees, 0, nMaxTrees, 200, 0.5, 1.5);
+  event.ConnectAllVariables(target_true, false, false);
 
   // prepare for loop over tree entries
   long maxEvent = source->GetEntries();
@@ -117,15 +124,19 @@ int main(int argc, char * argv[]) {
     // get event
     source->GetEntry( ievent );
 
-    // weight diagnostics  
-    for (int index = 0; index < nMaxTrees; ++index) {
-      for (unsigned int f = 0; f < forests.size(); ++f) {
-	const std::vector<const DecisionTree *> trees = forests.at(f)->GetTrees();
-	int nTrees = trees.size();
-	if (index >= nTrees) continue;
-	WeightDiagnostics->Fill(index, trees.at(index)->GetWeight());
-      }
+    // get event weight
+    static float & evtWeight = Event::Instance().get<float>(eventWeightName);
+    weight = evtWeight;
+    
+    // multiply with efficiency weight
+    for (const Variable * var : Variables::Get()) {
+      effFunc.SetVariable((var->Name()).c_str(), var->Value());
     }
+    weight *= effFunc.EvalPar(0);
+    
+    // fill output branches
+    target_true->GetEntry( ievent );
+    b_weight->Fill();
     
   }
 
@@ -134,9 +145,8 @@ int main(int argc, char * argv[]) {
   double frequency = static_cast<double>(maxEvent) / duration;
   log << Log::INFO << "---> processed : " << std::setw(8) << 100 << "\%  ---  frequency : " << std::setw(7) << static_cast<int>(frequency) << " events/sec  ---  time : " << std::setw(4) << static_cast<int>(duration) << " sec  ---  remaining time :    0 sec"<< Log::endl(); 
 
-  // write to file
-  outFile->Write();
-
+  // write tree
+  target_true->Write();  
   
   // and we're done!
   return 0;

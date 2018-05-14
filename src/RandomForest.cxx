@@ -4,12 +4,18 @@
 #include "DecisionTree.h"
 #include "Config.h"
 #include "HistDefs.h"
+#include "HistService.h"
+#include "Variables.h"
+#include "Variable.h"
+#include "Event.h"
 
 // stl includes
 #include <vector>
 
 // ROOT includes
 #include "TTree.h"
+#include "TH1F.h"
+#include "TString.h"
 
 
 
@@ -57,6 +63,14 @@ RandomForest::~RandomForest()
 void RandomForest::Initialize()
 {
 
+  // check if bagging is enabled
+  static bool bagging = false;
+  Config::Instance().getif<bool>("Bagging", bagging); 
+  if ( ! bagging ) {
+    m_log << Log::ERROR << "Initialize() : Bagging needs to be enabled. In config file : 'bool bagging = true'" << Log::endl();
+    throw(0);    
+  }
+  
   // get histogram definitions
   m_histDefs = new HistDefs;
   m_histDefs->Initialize();
@@ -79,7 +93,7 @@ void RandomForest::Process()
   int ntree = Config::Instance().get<int>("NumberOfTrees");
   for (int itree = 0; itree < ntree; ++itree) {
 
-    // prepare event indices
+    // bagging (prepare event indices)
     Algorithm::PrepareIndices();
     
     // create tree
@@ -88,13 +102,39 @@ void RandomForest::Process()
     
     // add tree to forest
     forest->AddTree( dtree );
+    
+    // save source/target distributions of unweighted sub-samples via HistService
+    for (const HistDefs::Entry & entry : m_histDefs->GetEntries()) {
+      HistService::Instance().AddHist(TString::Format("source_%s_%d", entry.Name().c_str(), itree).Data(), /*entry.Nbins()*/ 50, entry.Xmin(), entry.Xmax());
+      HistService::Instance().AddHist(TString::Format("target_%s_%d", entry.Name().c_str(), itree).Data(), /*entry.Nbins()*/ 50, entry.Xmin(), entry.Xmax());
+    }
+    // source
+    m_log << Log::INFO << "Process() : Saving source distributions" << Log::endl();
+    long maxEvent = m_indicesSource->size();
+    for (long ievent = 0; ievent < maxEvent; ++ievent) {
+      long index = m_indicesSource->at(ievent);
+      m_source->GetEntry( index );
+      for (const HistDefs::Entry & entry : m_histDefs->GetEntries()) {
+	HistService::Instance().GetHist( TString::Format("source_%s_%d", entry.Name().c_str(), itree).Data() )->Fill(entry.GetVariable()->Value());
+      }
+    }
+    // target
+    m_log << Log::INFO << "Process() : Saving target distributions" << Log::endl();
+    maxEvent = m_indicesTarget->size();
+    for (long ievent = 0; ievent < maxEvent; ++ievent) {
+      long index = m_indicesTarget->at(ievent);
+      m_target->GetEntry( index );
+      for (const HistDefs::Entry & entry : m_histDefs->GetEntries()) {
+	HistService::Instance().GetHist( TString::Format("target_%s_%d", entry.Name().c_str(), itree).Data() )->Fill(entry.GetVariable()->Value());
+      }
+    }
 
   }
   
   // add forest to internal vector
   m_forests.clear();
   m_forests.push_back( forest );
-
+  
 }
 
 
@@ -152,7 +192,8 @@ void RandomForest::GetWeight(float & weight, float & error)
   for (float e : error_vec) {
     error += pow(e - weight, 2);
   }
-  error = sqrt( error/(nTreeTotal - 1) );
+  if ( nTreeTotal > 1) error = sqrt( error/(nTreeTotal - 1) );
+  else error = sqrt( error/nTreeTotal );
   
 }
 

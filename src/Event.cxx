@@ -25,7 +25,7 @@ Event::Event() :
 }
 
 
-void Event::ConnectAllVariables(TTree * tree, bool disableOtherBranches)
+void Event::ConnectAllVariables(TTree * tree, bool disableOtherBranches, bool connectEventWeight)
 {
 
   // disable all branches
@@ -36,9 +36,11 @@ void Event::ConnectAllVariables(TTree * tree, bool disableOtherBranches)
   #include "VARIABLES"
 
   // connect event weight
-  const std::string & eventWeightName = Config::Instance().get<std::string>("EventWeightVariableName");
-  ConnectVariable<float>(eventWeightName.c_str(), tree);
-
+  if (connectEventWeight) {
+    const std::string & eventWeightName = Config::Instance().get<std::string>("EventWeightVariableName");
+    ConnectVariable<float>(eventWeightName.c_str(), tree);
+  }
+  
 }
 
 

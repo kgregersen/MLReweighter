@@ -31,7 +31,7 @@ public:
       m_variable(variable),
       m_xmin(std::numeric_limits<float>::max()),
       m_xmax(-std::numeric_limits<float>::max()),
-      m_nbins(500)
+      m_nbins(100)
     {}
 
     // destructor

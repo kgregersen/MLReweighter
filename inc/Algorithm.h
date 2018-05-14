@@ -35,7 +35,7 @@ public:
   // get weight
   virtual void GetWeight(float & weight, float & error) = 0;
 
-    
+  
 protected:
 
   // trees
@@ -46,12 +46,15 @@ protected:
   void PrepareIndices();
   std::vector<long> * m_indicesSource;
   std::vector<long> * m_indicesTarget;
+  
+  // helper functions
+  int BinarySearchIndex(const std::vector<float> & cDist , float cVal, int l, int r) const;
 
   // event weights
   std::vector<float> m_weights;
 
   // log
-  Log m_log;
+  mutable Log m_log;
   
 };
 

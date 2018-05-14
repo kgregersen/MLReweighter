@@ -1,0 +1,12 @@
+
+# I/O settings
+string WeightsFileName         = ./weights/BDTWeights_withEff.txt
+string InputFileName           = ./files/data_1_withEff.root
+string InputTreeNameSource     = source
+
+# additional variables
+string Method                  = BDT
+string EventWeightVariableName = weight
+
+# misc. settings
+string PrintLevel              = INFO

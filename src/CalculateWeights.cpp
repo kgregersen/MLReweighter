@@ -9,16 +9,19 @@
 #include "Config.h"
 #include "Log.h"
 #include "Method.h"
+#include "HistService.h"
 
 // stl includes
 #include <vector>
 #include <string>
 #include <fstream>
 #include <ctime>
+#include <map>
 
 // ROOT includes
 #include "TFile.h"
 #include "TTree.h"
+#include "TH1F.h"
 
 
 
@@ -125,7 +128,7 @@ int main(int argc, char * argv[]) {
 
   // print timestamp to file
   std::time_t now= std::time(0);
-  std::tm* now_tm= std::gmtime(&now);
+  std::tm * now_tm= std::gmtime(&now);
   char buf[200];
   std::strftime(buf, 200, "%a, %d %b %y %T %z", now_tm);
   outfile << "Time stamp : " << buf << "\n\n";
@@ -148,6 +151,17 @@ int main(int argc, char * argv[]) {
 
   // close file
   outfile.close();
+  
+  // Save histograms in HistService (if any)
+  if (HistService::Instance().GetMap().size() > 0) {
+    TFile * histOut = new TFile("histOut.root", "recreate");
+    std::map<std::string, TH1F *> histMap = HistService::Instance().GetMap();
+    for (std::pair<const std::string, TH1F *> & histEntry : histMap) {
+      TH1F * hist = histEntry.second;
+      hist->SetDirectory( histOut );
+    }
+    histOut->Write();
+  }
   
   // time spent on growing tree
   double duration = (std::clock() - start)/static_cast<double>(CLOCKS_PER_SEC);    

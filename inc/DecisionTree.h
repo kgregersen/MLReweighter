@@ -74,6 +74,7 @@ private:
   TTree * m_target;
   const std::vector<long> * m_indicesSource;
   const std::vector<long> * m_indicesTarget;
+  float m_normalization;
 
   // histogram definitions
   const HistDefs * m_histDefs;

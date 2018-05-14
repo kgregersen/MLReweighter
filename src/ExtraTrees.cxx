@@ -57,6 +57,14 @@ ExtraTrees::~ExtraTrees()
 void ExtraTrees::Initialize()
 {
 
+  // check if bagging is enabled
+  static bool bagging = false;
+  Config::Instance().getif<bool>("Bagging", bagging); 
+  if ( ! bagging ) {
+    m_log << Log::ERROR << "Initialize() : Bagging needs to be enabled. In config file : 'bool bagging = true'" << Log::endl();
+    throw(0);    
+  }
+  
   // get histogram definitions
   m_histDefs = new HistDefs;
   m_histDefs->Initialize();
@@ -79,7 +87,7 @@ void ExtraTrees::Process()
   int ntree = Config::Instance().get<int>("NumberOfTrees");
   for (int itree = 0; itree < ntree; ++itree) {
 
-    // prepare event indices
+    // bagging (prepare event indices)
     Algorithm::PrepareIndices();
     
     // create tree

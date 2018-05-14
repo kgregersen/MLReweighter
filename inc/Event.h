@@ -30,7 +30,7 @@ public:
   ~Event() {}
   
   // connect all
-  void ConnectAllVariables(TTree * tree, bool disableOtherBranches = true);
+  void ConnectAllVariables(TTree * tree, bool disableOtherBranches = true, bool connectEventWeight = true);
 
   // get variable (non-const)
   template <typename T>
