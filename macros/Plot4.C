@@ -13,6 +13,7 @@
 #include "TString.h"
 #include "TPad.h"
 #include "TLatex.h"
+#include "TLine.h"
 
 // STL includes
 #include <iostream>
@@ -46,7 +47,7 @@ void PrepareTH1F(TH1F * h,  int color, int linestyle, int markerstyle, int fill,
 
 
 
-void Plot4(TString inFile, TString sourceName, int nBins = 100, float xMin = -1, float xMax = 1)
+void Plot4(TString inFile, TString sourceName, TString eventWeightName, int nBins = 100, float xMin = -1, float xMax = 1)
 {
 
   TString BDTw = "BDTWeight";
@@ -67,13 +68,9 @@ void Plot4(TString inFile, TString sourceName, int nBins = 100, float xMin = -1,
   TCanvas * c = new TCanvas("c","", 1200, 800);
   c->cd();
 
-  TString cond = "";//"(EffWeight-EffWeight)/EffWeight>5";
-  t->Draw(BDTw + "-" + Effw + ">>hBDT", cond.Data());
-  t->Draw(RFw + "-" + Effw  + ">>hRF" , cond.Data());
-  t->Draw(ETw + "-" + Effw  + ">>hET" , cond.Data());
-  // t->Draw("(" + BDTw + "-" + Effw + ")/" + Effw + ">>hBDT", cond.Data());
-  // t->Draw("(" + RFw + "-" + Effw  + ")/" + Effw + ">>hRF" , cond.Data());
-  // t->Draw("(" + ETw + "-" + Effw  + ")/" + Effw + ">>hET" , cond.Data());
+  t->Draw(BDTw + "-" + Effw + ">>hBDT", eventWeightName.Data());
+  t->Draw(RFw + "-" + Effw  + ">>hRF" , eventWeightName.Data());
+  t->Draw(ETw + "-" + Effw  + ">>hET" , eventWeightName.Data());
 
   hBDT->Scale( 1./hBDT->Integral() );
   hRF ->Scale( 1./hRF ->Integral() );
@@ -97,7 +94,7 @@ void Plot4(TString inFile, TString sourceName, int nBins = 100, float xMin = -1,
   
   p0->cd();
   
-  TH1 * frame1 = p0->DrawFrame(hBDT->GetXaxis()->GetXmin(), yMin, hBDT->GetXaxis()->GetXmax(), hBDT->GetMaximum()*500);
+  TH1 * frame1 = p0->DrawFrame(hET->GetXaxis()->GetXmin(), yMin, hET->GetXaxis()->GetXmax(), hET->GetMaximum()*500);
 
   frame1->GetYaxis()->SetTitle("Probability Density Function");
   frame1->GetYaxis()->CenterTitle();
@@ -137,7 +134,7 @@ void Plot4(TString inFile, TString sourceName, int nBins = 100, float xMin = -1,
   tex.DrawLatex(0.59, 0.717, TString::Format("#mu = %0.3f", hET->GetMean()));
   tex.DrawLatex(0.71, 0.717, TString::Format("#sigma = %0.3f", hET->GetStdDev()));
 
-  TLine line(hT->GetXaxis()->GetXmin(), 0.0, hT->GetXaxis()->GetXmax(), 0.0);
+  TLine line(hBDT->GetXaxis()->GetXmin(), 0.0, hBDT->GetXaxis()->GetXmax(), 0.0);
   line.SetLineColor(kBlack);
   line.SetLineStyle(kDashed);
   line.Draw("same");

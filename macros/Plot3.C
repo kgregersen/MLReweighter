@@ -20,7 +20,7 @@
 
 
 
-void Plot3(TString inFile, TString sourceName, TString var1, TString var2, TString weightName, TString label, int nBinsX, float xMin, float xMax, int nBinsY, float yMin, float yMax, float zMin = -999, float zMax = -999)
+void Plot3(TString inFile, TString sourceName, TString var1, TString var2, TString eventWeightName, TString MLWeightName, TString label, int nBinsX, float xMin, float xMax, int nBinsY, float yMin, float yMax, float zMin = -999, float zMax = -999)
 {
 
   TFile * f = new TFile(inFile.Data(), "read");
@@ -32,9 +32,7 @@ void Plot3(TString inFile, TString sourceName, TString var1, TString var2, TStri
   TCanvas * c = new TCanvas("c","", 1200, 1000);
   c->cd();
 
-  TString cond = "";// TString::Format("*(%s>1.5)", weightName.Data());
-  
-  t->Draw( TString::Format("%s:%s>>hAlg_2D", var1.Data(), var2.Data()), (weightName+cond).Data() );
+  t->Draw( TString::Format("%s:%s>>hAlg_2D", var1.Data(), var2.Data()), TString::Format("%s*%s", eventWeightName.Data(), MLWeightName.Data()) );
   t->Draw( TString::Format("%s:%s>>hEff_2D", var1.Data(), var2.Data()), "EffWeight" );
   
   TH2F * ratio_2D = new TH2F("ratio_2D", "", nBinsX, xMin, xMax, nBinsY, yMin, yMax);
@@ -107,8 +105,8 @@ void Plot3(TString inFile, TString sourceName, TString var1, TString var2, TStri
     int result = system(command);
   }
   
-  c->SaveAs( TString::Format("%s/%s_weightMap.pdf", directory.Data(), weightName.Data()) );
-  c->SaveAs( TString::Format("%s/%s_weightMap.eps", directory.Data(), weightName.Data()) );
+  c->SaveAs( TString::Format("%s/%s_weightMap.pdf", directory.Data(), MLWeightName.Data()) );
+  c->SaveAs( TString::Format("%s/%s_weightMap.eps", directory.Data(), MLWeightName.Data()) );
 
 }
   

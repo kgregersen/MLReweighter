@@ -1,7 +1,7 @@
 
 # I/O settings
 string WeightsFileName         = ./weights/RFWeights.txt
-string InputFileName           = ./files/data_2.root
+string InputFileName           = ./files/data_1_TESTRF.root
 string InputTreeNameSource     = source
 
 # additional variables

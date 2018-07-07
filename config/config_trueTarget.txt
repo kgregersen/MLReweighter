@@ -1,8 +1,8 @@
 
 # I/O settings
 string EfficiencyFunction      = 2*0.72*(0.5*exp(-((sqrt(X1*X2+0.01)-0.4)/0.15)**2)+0.75*exp(-((X2-0.3)/0.25)**2))
-string InputFileName           = ./files/data_orig_2.root
-string OutputFileName          = ./files/data_2_truetarget_v3.root
+string InputFileName           = ./files/data_orig_1.root
+string OutputFileName          = ./files/data_1_TESTBDT.root
 string InputTreeNameSource     = source
 
 # additional variables

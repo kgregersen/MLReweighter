@@ -48,7 +48,7 @@ public:
   void Print(const std::string & prefix, Log::LEVEL level) const;
 
   // write to file
-  void Write(std::ofstream & file) const;
+  void Write(std::ofstream & file, float normalization = 1) const;
 
   
 private:
@@ -74,7 +74,6 @@ private:
   TTree * m_target;
   const std::vector<long> * m_indicesSource;
   const std::vector<long> * m_indicesTarget;
-  float m_normalization;
 
   // histogram definitions
   const HistDefs * m_histDefs;

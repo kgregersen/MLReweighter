@@ -46,7 +46,7 @@ void PrepareTH1F(TH1F * h,  int color, int linestyle, int markerstyle, int fill,
 
 
 
-void Plot2(TString inFile, TString sourceName, int nBins = 100, float xmax = 3)
+void Plot2(TString inFile, TString sourceName, TString eventWeightName, int nBins = 100, float xmax = 3)
 {
 
   TString BDTw = "BDTWeight";
@@ -72,11 +72,11 @@ void Plot2(TString inFile, TString sourceName, int nBins = 100, float xmax = 3)
   c->cd();
   c->SetLogy();
 
-  t->Draw(BDTw + ">>hBDT");
-  t->Draw(RFw  + ">>hRF" );
-  t->Draw(ETw  + ">>hET" );
+  t->Draw(TString::Format("%s*%s>>hBDT", eventWeightName.Data(), BDTw.Data()));
+  t->Draw(TString::Format("%s*%s>>hRF" , eventWeightName.Data(), RFw.Data()));
+  t->Draw(TString::Format("%s*%s>>hET" , eventWeightName.Data(), ETw.Data()));
 
-  t->Draw(Effw + ">>hEff");
+  t->Draw(TString::Format("%s*%s>>hEff", eventWeightName.Data(), Effw.Data()));
 
   TH1F * ratio_BDT = static_cast<TH1F *>(hBDT->Clone());
   ratio_BDT->Add(hEff, -1);
@@ -112,7 +112,7 @@ void Plot2(TString inFile, TString sourceName, int nBins = 100, float xmax = 3)
   
   p1->cd();
   
-  TH1 * frame1 = p1->DrawFrame(hBDT->GetXaxis()->GetXmin(), ymin, hBDT->GetXaxis()->GetXmax(), hBDT->GetMaximum()*1.5);
+  TH1 * frame1 = p1->DrawFrame(hEff->GetXaxis()->GetXmin(), ymin, hEff->GetXaxis()->GetXmax(), hEff->GetMaximum()*1.5);
   frame1->GetYaxis()->SetTitle("Probaility Density Function");
   frame1->GetYaxis()->CenterTitle();
   frame1->GetYaxis()->SetTitleSize(0.05);
@@ -146,7 +146,7 @@ void Plot2(TString inFile, TString sourceName, int nBins = 100, float xmax = 3)
   //TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -0.79, hBDT->GetXaxis()->GetXmax(), 0.79);
   //TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -0.69, hBDT->GetXaxis()->GetXmax(), 0.69);
   //TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -0.49, hBDT->GetXaxis()->GetXmax(), 0.49);
-  TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -0.39, hBDT->GetXaxis()->GetXmax(), 0.39);
+  TH1 * frame2 = p2->DrawFrame(hEff->GetXaxis()->GetXmin(), -0.39, hEff->GetXaxis()->GetXmax(), 0.39);
   //TH1 * frame2 = p2->DrawFrame(hBDT->GetXaxis()->GetXmin(), -0.049, hBDT->GetXaxis()->GetXmax(), 0.049);
   frame2->GetXaxis()->SetTitle( hBDT->GetXaxis()->GetTitle() );
   frame2->GetXaxis()->CenterTitle();
@@ -169,7 +169,7 @@ void Plot2(TString inFile, TString sourceName, int nBins = 100, float xmax = 3)
   ratio_ET->DrawCopy("histsame");
   ratio_ET->Draw("psame");
 
-  TLine line(hBDT->GetXaxis()->GetXmin(), 0.0, hBDT->GetXaxis()->GetXmax(), 0.0);
+  TLine line(hEff->GetXaxis()->GetXmin(), 0.0, hEff->GetXaxis()->GetXmax(), 0.0);
   line.SetLineColor(kBlack);
   line.SetLineStyle(kDashed);
   line.Draw("same");

@@ -33,7 +33,7 @@ public:
   virtual void Write(std::ofstream & outfile) = 0;
   
   // get weight
-  virtual void GetWeight(float & weight, float & error) = 0;
+  virtual void GetWeight(float & weight, float & error) const = 0;
 
   
 protected:
@@ -49,7 +49,8 @@ protected:
   
   // helper functions
   int BinarySearchIndex(const std::vector<float> & cDist , float cVal, int l, int r) const;
-
+  float GetNormalization() const;
+  
   // event weights
   std::vector<float> m_weights;
 

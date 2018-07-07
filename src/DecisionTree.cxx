@@ -22,7 +22,6 @@ DecisionTree::DecisionTree(TTree * source, TTree * target, const std::vector<lon
   m_target(target),
   m_indicesSource(indicesSource),
   m_indicesTarget(indicesTarget),
-  m_normalization(0),
   m_histDefs(histDefs),
   m_log("DecisionTree")
 {
@@ -34,31 +33,6 @@ DecisionTree::DecisionTree(TTree * source, TTree * target, const std::vector<lon
     Log::LEVEL level = Log::StringToLEVEL(str_level);
     m_log.SetLevel(level);
   }
-
-  // // get normalisation
-  // m_log << Log::INFO << "DecisionTree() : Getting normalization (target/source)" << Log::endl();
-  // double sumWSourceBag = m_indicesSource->size();
-  // double sumWTargetBag = m_indicesTarget->size();
-  // double sumWSourceTot = 0;
-  // double sumWTargetTot = 0;
-  // static const std::string & eventWeightName = Config::Instance().get<std::string>("EventWeightVariableName");
-  // static const float & eventWeight = Event::Instance().get<float>(eventWeightName);
-  // for (long ievent = 0; ievent < m_source->GetEntries(); ++ievent) {
-  //   m_source->GetEntry( ievent );
-  //   sumWSourceTot += eventWeight;
-  // }
-  // for (long ievent = 0; ievent < m_target->GetEntries(); ++ievent) {
-  //   m_target->GetEntry( ievent );
-  //   sumWTargetTot += eventWeight;
-  // }
-  // if (sumWSourceTot <= 0 || sumWSourceTot <= 0 || sumWSourceTot <= 0 || sumWSourceTot <= 0) {
-  //   m_log << Log::ERROR << "DecisionTree() : sumWSourceTot = " << sumWSourceTot << ", sumWSourceBag = " << sumWSourceBag << ", sumWTargetTot = " << sumWTargetTot << ", sumWTargetBag = " << sumWTargetBag << Log::endl();
-  //   throw(0);
-  // }
-  // m_normalization = (sumWTargetTot/sumWSourceTot)/(sumWTargetBag/sumWSourceBag);
-  // m_log << Log::INFO << "DecisionTree() : sumWTargetBag = " << sumWTargetBag << ", sumWSourceBag = " << sumWSourceBag << " (ratio = " << sumWTargetBag/sumWSourceBag << ")" << Log::endl();
-  // m_log << Log::INFO << "DecisionTree() : sumWTargetTot = " << sumWTargetTot << ", sumWSourceTot = " << sumWSourceTot << " (ratio = " << sumWTargetTot/sumWSourceTot << ")" << Log::endl();
-  // m_log << Log::INFO << "DecisionTree() : Normalization = " << m_normalization << Log::endl();
   
 }
 
@@ -68,7 +42,6 @@ DecisionTree::DecisionTree(const std::vector<std::pair<float, std::vector<const 
   m_target(0),
   m_indicesSource(0),
   m_indicesTarget(0),
-  m_normalization(0),
   m_histDefs(0),
   m_log("DecisionTree")
 {
@@ -267,33 +240,11 @@ void DecisionTree::FinalizeWeights()
     sumTarget     += target;
   }
 
-  // now set and lock the weights on the final nodes (m_normalization is calculated in DecisionTree.cxx and sets the total scale target/source)
+  // now set and lock the weights on the final nodes
   for (unsigned int i = 0; i < weights.size(); ++i) { 
     finalNodes.at(i)->SetAndLockWeight( sumTarget*weights[i]/sumSource );
   }
 
-  // get normalisation
-  m_log << Log::INFO << "FinalizeWeights() : Getting normalization (target/source)" << Log::endl();
-  double sumWSourceTot = 0;
-  double sumWTargetTot = 0;
-  static const std::string & eventWeightName = Config::Instance().get<std::string>("EventWeightVariableName");
-  static const float & eventWeight = Event::Instance().get<float>(eventWeightName);
-  for (long ievent = 0; ievent < m_source->GetEntries(); ++ievent) {
-    m_source->GetEntry( ievent );
-    sumWSourceTot += eventWeight*GetWeight();
-  }
-  for (long ievent = 0; ievent < m_target->GetEntries(); ++ievent) {
-    m_target->GetEntry( ievent );
-    sumWTargetTot += eventWeight;
-  }
-  if (sumWSourceTot <= 0 || sumWTargetTot <= 0) {
-    m_log << Log::ERROR << "FinalizeWeights() : sumWSourceTot = " << sumWSourceTot << ", sumWTargetTot = " << sumWTargetTot << Log::endl();
-    throw(0);
-  }
-  m_normalization = sumWTargetTot/sumWSourceTot;
-  m_log << Log::INFO << "FinalizeWeights() : sumWTargetTot = " << sumWTargetTot << ", sumWSourceTot = " << sumWSourceTot << " (ratio = " << sumWTargetTot/sumWSourceTot << ")" << Log::endl();
-  m_log << Log::INFO << "FinalizeWeights() : Normalization = " << m_normalization << Log::endl();
-  
 }
 
   
@@ -313,7 +264,7 @@ void DecisionTree::Print(const std::string & prefix, Log::LEVEL level) const
   
   // loop over final nodes and print weights and cuts
   for (const Node * node : finalNodes) {
-    m_log << level << prefix << " ---> Weight = " << std::setw(10) << std::left << m_normalization*node->GetWeight();
+    m_log << level << prefix << " ---> Weight = " << std::setw(10) << std::left << node->GetWeight();
     if ( node->SumSource() > 0 ) {
       m_log << " SumTarget / SumSource = " << std::setw(6) << std::right << node->SumTarget() << " / " << std::setw(6) << std::right << node->SumSource() << " = " << std::setw(10) << std::left << node->SumTarget()/node->SumSource();
     }
@@ -584,7 +535,7 @@ const std::vector<const Node *> DecisionTree::FinalNodes() const
 }
 
 
-void DecisionTree::Write(std::ofstream & file) const
+void DecisionTree::Write(std::ofstream & file, float normalization) const
 {
 
   // instantiate tree counter
@@ -599,7 +550,7 @@ void DecisionTree::Write(std::ofstream & file) const
   for (const Node * node : finalNodes) {
 
     // print weight
-    file << "weight=" << m_normalization*node->GetWeight() << ":SumTarget/SumSource=" << node->SumTarget() << "/" << node->SumSource() << "=" << node->SumTarget()/node->SumSource() << ":";
+    file << "weight=" << normalization*node->GetWeight() << ":SumTarget/SumSource=" << node->SumTarget() << "/" << node->SumSource() << "=" << node->SumTarget()/node->SumSource() << ":";
 
     // print cuts for each final node
     const Branch * b = node->InputBranch();

@@ -7,6 +7,10 @@
 #include "TTree.h"
 #include "TRandom3.h"
 
+// stl includes
+#include <algorithm>
+
+
 
 Algorithm::Algorithm() :
   m_source(0),
@@ -166,3 +170,36 @@ int Algorithm::BinarySearchIndex(const std::vector<float> & cDist , float cVal, 
   return r;
 
 }
+
+
+float Algorithm::GetNormalization() const
+{
+
+  // get normalisation
+  m_log << Log::INFO << "GetNormalization() : Getting normalization (target/source)" << Log::endl();
+  double sumWSourceTot = 0;
+  double sumWTargetTot = 0;
+  static const std::string & eventWeightName = Config::Instance().get<std::string>("EventWeightVariableName");
+  static const float & eventWeight = Event::Instance().get<float>(eventWeightName);
+  for (long ievent = 0; ievent < m_source->GetEntries(); ++ievent) {
+    m_source->GetEntry( ievent );
+    float MLw = 1;
+    float MLe = 0;
+    GetWeight(MLw,MLe);
+    sumWSourceTot += eventWeight*MLw;
+  }
+  for (long ievent = 0; ievent < m_target->GetEntries(); ++ievent) {
+    m_target->GetEntry( ievent );
+    sumWTargetTot += eventWeight;
+  }
+  if (sumWSourceTot <= 0 || sumWTargetTot <= 0) {
+    m_log << Log::ERROR << "GetNormalization() : sumWSourceTot = " << sumWSourceTot << ", sumWTargetTot = " << sumWTargetTot << Log::endl();
+    throw(0);
+  }
+  float normalization = sumWTargetTot/sumWSourceTot;
+  m_log << Log::INFO << "GetNormalization() : sumWTargetTot = " << sumWTargetTot << ", sumWSourceTot = " << sumWSourceTot << " normalization = " << normalization << ")" << Log::endl();
+
+  return normalization;
+
+}
+

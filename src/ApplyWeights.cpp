@@ -49,12 +49,6 @@ int main(int argc, char * argv[]) {
   // initialize variables (needs to be done before declaring the algorithm)
   Variables::Initialize();
 
-  // open weights file
-  std::string weightsfilename = Config::Instance().get<std::string>("WeightsFileName");
-  std::ifstream weightsfile;
-  log << Log::INFO << "Opening file " << weightsfilename << Log::endl();
-  weightsfile.open(weightsfilename.c_str());
- 
   // initialize algorithm
   std::string str_method;
   Config::Instance().getif<std::string>("Method", str_method);
@@ -80,7 +74,7 @@ int main(int argc, char * argv[]) {
     log << Log::ERROR << "Couldn't recognize method!" << Log::endl();
     return 0;
   } 
-  
+    
   // open input file in 'update' mode
   const std::string & inputfilename = Config::Instance().get<std::string>("InputFileName");
   TFile * f = new TFile(inputfilename.c_str(), "update");

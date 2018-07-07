@@ -106,10 +106,8 @@ void Plot6(TString inFile, TString histName, TString label, float minMean = 0.5,
     int result = system(command);
   }
 
-  TString outName = inFile;
-  outName.Remove(outName.Length() - 5);
-  c->SaveAs( TString::Format("%s/%s.pdf", directory.Data(), outName.Data()) );
-  c->SaveAs( TString::Format("%s/%s.eps", directory.Data(), outName.Data()) );
+  c->SaveAs( TString::Format("%s/%s.pdf", directory.Data(), histName.Data()) );
+  c->SaveAs( TString::Format("%s/%s.eps", directory.Data(), histName.Data()) );
 
 }
 

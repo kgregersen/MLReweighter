@@ -46,10 +46,10 @@ void PrepareTH1F(TH1F * h,  int color, int linestyle, int markerstyle, int fill,
 
 
 
-void Plot1(TString inFileTrain, TString inFileTest, TString sourceName, TString targetName, TString weightName, TString label, TString variable, int nBins, float xMin, float xMax)
+void Plot1(TString inFileTrain, TString inFileTest, TString sourceName, TString targetName, TString eventWeightName, TString MLWeightName, TString label, TString variable, int nBins, float xMin, float xMax)
 {
 
-  TString errName = weightName + "_err"; 
+  TString errName = MLWeightName + "_err"; 
 
   TH1F * hS_train = 0;
   TH1F * hR_train = 0;
@@ -69,16 +69,16 @@ void Plot1(TString inFileTrain, TString inFileTest, TString sourceName, TString 
 
   hS_train = new TH1F("hS_train_integral", "", 1, 0,1);
   hR_train = new TH1F("hR_train_integral", "", 1, 0,1);
-  tS_train->Draw( TString::Format("%s>>hS_train_integral", variable.Data()) );
-  tS_train->Draw( TString::Format("%s>>hR_train_integral", variable.Data()) , weightName.Data());
+  tS_train->Draw( TString::Format("%s>>hS_train_integral", variable.Data()), eventWeightName.Data() );
+  tS_train->Draw( TString::Format("%s>>hR_train_integral", variable.Data()), TString::Format("%s*%s", eventWeightName.Data(), MLWeightName.Data()));
 
   hS_test = new TH1F("hS_test_integral", "", 1, 0,1);
   hR_test = new TH1F("hR_test_integral", "", 1, 0,1);
-  tS_test->Draw( TString::Format("%s>>hS_test_integral", variable.Data()) );
-  tS_test->Draw( TString::Format("%s>>hR_test_integral", variable.Data()), weightName.Data());
+  tS_test->Draw( TString::Format("%s>>hS_test_integral", variable.Data()), eventWeightName.Data() );
+  tS_test->Draw( TString::Format("%s>>hR_test_integral", variable.Data()), TString::Format("%s*%s", eventWeightName.Data(), MLWeightName.Data()));
 
   hT = new TH1F("hT_integral", "", 1, 0,1);
-  tT->Draw( TString::Format("%s>>hT_integral", variable.Data()) );
+  tT->Draw( TString::Format("%s>>hT_integral", variable.Data()), eventWeightName.Data() );
 
   float hS_train_integral = hS_train->Integral(0,-1);
   float hR_train_integral = hR_train->Integral(0,-1);
@@ -97,13 +97,13 @@ void Plot1(TString inFileTrain, TString inFileTest, TString sourceName, TString 
   PrepareTH1F(hS_test  , kGreen + 1  , kDashed , 22, 0, variable);
   PrepareTH1F(hT       , kBlack      , kSolid  , 20, 0, variable);
 
-  tS_train->Draw( TString::Format("%s>>%s", variable.Data(), hS_train->GetName()) );
-  tS_test ->Draw( TString::Format("%s>>%s", variable.Data(), hS_test ->GetName()) );
+  tS_train->Draw( TString::Format("%s>>%s", variable.Data(), hS_train->GetName()), eventWeightName.Data() );
+  tS_test ->Draw( TString::Format("%s>>%s", variable.Data(), hS_test ->GetName()), eventWeightName.Data() );
 
-  tS_train->Draw( TString::Format("%s>>%s", variable.Data(), hR_train->GetName()), weightName.Data() );
-  tS_test ->Draw( TString::Format("%s>>%s", variable.Data(), hR_test ->GetName()), weightName.Data() );
+  tS_train->Draw( TString::Format("%s>>%s", variable.Data(), hR_train->GetName()), TString::Format("%s*%s", eventWeightName.Data(), MLWeightName.Data()));
+  tS_test ->Draw( TString::Format("%s>>%s", variable.Data(), hR_test ->GetName()), TString::Format("%s*%s", eventWeightName.Data(), MLWeightName.Data()));
 
-  tT->Draw( TString::Format("%s>>%s", variable.Data(), hT->GetName()) );
+  tT->Draw( TString::Format("%s>>%s", variable.Data(), hT->GetName()), eventWeightName.Data() );
   
   hR_train->Scale( hT_integral/hR_train_integral );
   hS_train->Scale( hT_integral/hS_train_integral );
@@ -282,13 +282,13 @@ void Plot1(TString inFileTrain, TString inFileTest, TString sourceName, TString 
     int result = system(command);
   }
   
-  c->SaveAs( TString::Format("%s/%s_%s__LinScale.pdf", directory.Data(), weightName.Data(), variable.Data()) );
-  c->SaveAs( TString::Format("%s/%s_%s__LinScale.eps", directory.Data(), weightName.Data(), variable.Data()) );
+  c->SaveAs( TString::Format("%s/%s_%s__LinScale.pdf", directory.Data(), MLWeightName.Data(), variable.Data()) );
+  c->SaveAs( TString::Format("%s/%s_%s__LinScale.eps", directory.Data(), MLWeightName.Data(), variable.Data()) );
   
   frame1->SetMaximum(hT->GetMaximum()*5000.);
   p1->SetLogy();
-  c->SaveAs( TString::Format("%s/%s_%s__LogScale.pdf", directory.Data(), weightName.Data(), variable.Data()) );
-  c->SaveAs( TString::Format("%s/%s_%s__LogScale.eps", directory.Data(), weightName.Data(), variable.Data()) );
+  c->SaveAs( TString::Format("%s/%s_%s__LogScale.pdf", directory.Data(), MLWeightName.Data(), variable.Data()) );
+  c->SaveAs( TString::Format("%s/%s_%s__LogScale.eps", directory.Data(), MLWeightName.Data(), variable.Data()) );
     
 }
   

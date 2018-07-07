@@ -114,14 +114,15 @@ void ExtraTrees::Write(std::ofstream & outfile) {
   const std::vector<const DecisionTree *> & decisionTrees = m_forests.at(0)->GetTrees();
 
   // write trees to file
+  float norm = GetNormalization();
   for (const DecisionTree * dtree : decisionTrees) {
-    dtree->Write( outfile );
+    dtree->Write( outfile, norm );
   }
 
 }
 
 
-void ExtraTrees::GetWeight(float & weight, float & error)
+void ExtraTrees::GetWeight(float & weight, float & error) const
 {
 
   // reset weight/error

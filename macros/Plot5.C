@@ -20,7 +20,7 @@
 
 
 
-void Plot5(TString inFile, TString sourceName, TString weightName, TString label, int nBinsX, float xMin, float xMax, int nBinsY, float yMin, float yMax)
+void Plot5(TString inFile, TString sourceName, TString eventWeightName, TString MLWeightName, TString label, int nBinsX, float xMin, float xMax, int nBinsY, float yMin, float yMax)
 {
 
   TFile * f = new TFile(inFile.Data(), "read");
@@ -31,10 +31,7 @@ void Plot5(TString inFile, TString sourceName, TString weightName, TString label
   TCanvas * c = new TCanvas("c","", 1200, 1000);
   c->cd();
 
-  TString cond = "";//"EffWeight>0";//TString::Format("(%s>0)*(%s-%s)/%s", weightName.Data(), weightName.Data(), "EffWeight", "EffWeight");
-  
-  //t->Draw( TString::Format("(%s-%s)/%s:%s>>h", weightName.Data(), "EffWeight", "EffWeight", "EffWeight"), cond.Data() );
-  t->Draw( TString::Format("%s-%s:%s>>h", weightName.Data(), "EffWeight", "EffWeight"), cond.Data() );
+  t->Draw( TString::Format("%s-%s:%s>>h", MLWeightName.Data(), "EffWeight", "EffWeight"), eventWeightName.Data() );
   
   
   TPad * p0 = new TPad("p0", "p0", 0.0, 0.0, 1.0, 1.0);
@@ -86,8 +83,8 @@ void Plot5(TString inFile, TString sourceName, TString weightName, TString label
     int result = system(command);
   }
   
-  c->SaveAs( TString::Format("%s/%s_weightMap.pdf", directory.Data(), weightName.Data()) );
-  c->SaveAs( TString::Format("%s/%s_weightMap.eps", directory.Data(), weightName.Data()) );
+  c->SaveAs( TString::Format("%s/%s_weightMap.pdf", directory.Data(), MLWeightName.Data()) );
+  c->SaveAs( TString::Format("%s/%s_weightMap.eps", directory.Data(), MLWeightName.Data()) );
 
 }
   

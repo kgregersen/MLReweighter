@@ -117,14 +117,22 @@ void BDT::Write(std::ofstream & outfile) {
   const std::vector<const DecisionTree *> & decisionTrees = m_forests.at(0)->GetTrees();
 
   // write trees to file
+  float norm = GetNormalization();
   for (const DecisionTree * dtree : decisionTrees) {
-    dtree->Write( outfile );
+    static bool writeNorm = true;
+    if ( writeNorm ) {
+      writeNorm = false;
+      dtree->Write( outfile, norm );
+    }
+    else {
+      dtree->Write( outfile );
+    }
   }
 
 }
 
 
-void BDT::GetWeight(float & weight, float & error)
+void BDT::GetWeight(float & weight, float & error) const
 {
 
   // reset weight/error

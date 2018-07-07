@@ -36,7 +36,7 @@ public:
   virtual void Write(std::ofstream & outfile);
 
   // get weight
-  virtual void GetWeight(float & weight, float & error);
+  virtual void GetWeight(float & weight, float & error) const;
 
   
 private:
